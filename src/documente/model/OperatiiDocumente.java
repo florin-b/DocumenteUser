@@ -1,22 +1,41 @@
 package documente.model;
 
+import java.awt.Dimension;
+import java.awt.geom.Dimension2D;
+import java.awt.geom.Point2D;
+import java.awt.geom.Rectangle2D;
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
 import java.util.Properties;
 
+import com.spire.pdf.PdfDocument;
+import com.spire.pdf.PdfPageBase;
+import com.spire.pdf.graphics.PdfBrushes;
+import com.spire.pdf.graphics.PdfFont;
+import com.spire.pdf.graphics.PdfFontFamily;
+import com.spire.pdf.graphics.PdfStringFormat;
+import com.spire.pdf.graphics.PdfTextAlignment;
+import com.spire.pdf.graphics.PdfTilingBrush;
+import com.spire.pdf.graphics.PdfWordWrapType;
+
 import documente.beans.Document;
 import documente.beans.DocumentTip;
-import documente.beans.Furnizor;
 import documente.beans.Status;
 import documente.connection.DBManager;
 
@@ -274,8 +293,52 @@ public class OperatiiDocumente {
 			System.out.println(ex.toString());
 		}
 
-		return docBytes;
+		return addWaterMark(docBytes);
 
+	}
+
+	private byte[] addWaterMark(byte[] docBytes) {
+
+		PdfDocument pdf = new PdfDocument();
+		pdf.loadFromBytes(docBytes);
+
+		for (int i = 0; i < pdf.getPages().getCount(); i++) {
+			PdfPageBase page = pdf.getPages().get(i);
+			OperatiiDocumente.insertWatermark(page, "Arabesque " + getDateStamp());
+		}
+
+		ByteArrayOutputStream byteOutStream = new ByteArrayOutputStream();
+		pdf.saveToStream(byteOutStream);
+
+		return byteOutStream.toByteArray();
+
+	}
+
+	private String getDateStamp() {
+
+		LocalDateTime myDateObj = LocalDateTime.now();
+		DateTimeFormatter myFormatObj = DateTimeFormatter.ofPattern("dd-MM-yyyy");
+
+		return myDateObj.format(myFormatObj);
+	}
+
+	public static void insertWatermark(PdfPageBase page, String watermark) {
+		Dimension2D dimension2D = new Dimension();
+		dimension2D.setSize(page.getCanvas().getClientSize().getWidth() / 2,
+				page.getCanvas().getClientSize().getHeight() / 3);
+		PdfTilingBrush brush = new PdfTilingBrush(dimension2D);
+		brush.getGraphics().setTransparency(0.3F);
+		brush.getGraphics().save();
+		brush.getGraphics().translateTransform((float) brush.getSize().getWidth() / 2,
+				(float) brush.getSize().getHeight() / 2);
+		brush.getGraphics().rotateTransform(-45);
+		brush.getGraphics().drawString(watermark, new PdfFont(PdfFontFamily.Helvetica, 24), PdfBrushes.getViolet(), 0,
+				0, new PdfStringFormat(PdfTextAlignment.Center));
+		brush.getGraphics().restore();
+		brush.getGraphics().setTransparency(1);
+		Rectangle2D loRect = new Rectangle2D.Float();
+		loRect.setFrame(new Point2D.Float(0, 0), page.getCanvas().getClientSize());
+		page.getCanvas().drawRectangle(brush, loRect);
 	}
 
 	public List<DocumentTip> getDocumenteArticolTip(String codArticol, String tipDocument) {
@@ -290,7 +353,7 @@ public class OperatiiDocumente {
 
 			ResultSet rs = ps.executeQuery();
 
-			DocumentTip tipDoc ;
+			DocumentTip tipDoc;
 			while (rs.next()) {
 
 				tipDoc = new DocumentTip();

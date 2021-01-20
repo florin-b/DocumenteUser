@@ -1,6 +1,7 @@
 package documente.test;
 
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -13,7 +14,12 @@ import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Properties;
+
+import com.spire.pdf.PdfDocument;
+import com.spire.pdf.PdfPageBase;
 
 import documente.beans.Login;
 import documente.beans.User;
@@ -22,9 +28,13 @@ import documente.connection.UserDAO;
 import documente.model.OperatiiArticole;
 import documente.model.OperatiiDocumente;
 
+
 public class DocTest {
 
 	public static void main(String[] args) throws SQLException, IOException {
+		
+		
+		
 		
 
 		 //testIn();
@@ -39,11 +49,48 @@ public class DocTest {
 		
 		//testArticole();
 		
-		testDocumenteTip();
+		//testDocumenteTip();
 
 		//testArticoleDocument();
 		
 		//testFurnizori();
+		
+		
+		byte[] docBytes = new OperatiiDocumente().getDocumentByte("10900020", "1", "4011000004");
+		
+		PdfDocument pdf = new PdfDocument();
+		
+		pdf.loadFromBytes(docBytes);
+		
+		LocalDateTime myDateObj = LocalDateTime.now();
+		DateTimeFormatter myFormatObj = DateTimeFormatter.ofPattern("dd-MM-yyyy");
+		
+		System.out.println(myDateObj.format(myFormatObj));
+		
+		
+		for (int i = 0;i<pdf.getPages().getCount();i++){
+			PdfPageBase page = pdf.getPages().get(i);
+			OperatiiDocumente.insertWatermark(page,  "Arabesque " + myDateObj.format(myFormatObj));
+			
+		}
+		
+		
+		
+		 pdf.saveToFile("d:/temp/textWaterMark.pdf");
+		
+		
+		ByteArrayOutputStream byteOutStream = new ByteArrayOutputStream();
+		 
+
+		
+		
+		pdf.saveToStream(byteOutStream);
+		
+		System.out.println(byteOutStream.toByteArray());
+		
+		
+		
+		
 		
 
 	}

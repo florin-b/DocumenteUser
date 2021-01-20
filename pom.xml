@@ -26,6 +26,15 @@
 			</plugin>
 		</plugins>
 	</build>
+
+	<repositories>
+		<repository>
+			<id>com.e-iceblue</id>
+			<name>e-iceblue</name>
+			<url>http://repo.e-iceblue.com/nexus/content/groups/public/</url>
+		</repository>
+	</repositories>
+
 	<dependencies>
 		<dependency>
 			<groupId>org.glassfish.jersey.containers</groupId>
@@ -105,5 +114,12 @@
 			<artifactId>postgresql</artifactId>
 			<version>42.2.16</version>
 		</dependency>
+		<dependency>
+			<groupId> e-iceblue </groupId>
+			<artifactId>spire.pdf</artifactId>
+			<version>3.11.6</version>
+		</dependency>
+
+
 	</dependencies>
 </project>
