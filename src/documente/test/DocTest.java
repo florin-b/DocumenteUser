@@ -1,7 +1,6 @@
 package documente.test;
 
 import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -14,14 +13,12 @@ import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
+import java.util.List;
 import java.util.Properties;
 
-import com.spire.pdf.PdfDocument;
-import com.spire.pdf.PdfPageBase;
-
+import documente.beans.Furnizor;
 import documente.beans.Login;
+import documente.beans.Status;
 import documente.beans.User;
 import documente.connection.DBManager;
 import documente.connection.UserDAO;
@@ -34,7 +31,11 @@ public class DocTest {
 	public static void main(String[] args) throws SQLException, IOException {
 		
 		
+		//testArticoleDocument();
 		
+		//System.out.println(getArticoleSintetic());
+		
+		//System.out.println(new UserDAO().validateUser(new Login("NZAHARIA", "82CvVW")));
 		
 
 		 //testIn();
@@ -49,48 +50,31 @@ public class DocTest {
 		
 		//testArticole();
 		
-		//testDocumenteTip();
+		//testDocumente();
 
 		//testArticoleDocument();
 		
 		//testFurnizori();
 		
 		
-		byte[] docBytes = new OperatiiDocumente().getDocumentByte("10900020", "1", "4011000004");
-		
-		PdfDocument pdf = new PdfDocument();
-		
-		pdf.loadFromBytes(docBytes);
-		
-		LocalDateTime myDateObj = LocalDateTime.now();
-		DateTimeFormatter myFormatObj = DateTimeFormatter.ofPattern("dd-MM-yyyy");
-		
-		System.out.println(myDateObj.format(myFormatObj));
-		
-		
-		for (int i = 0;i<pdf.getPages().getCount();i++){
-			PdfPageBase page = pdf.getPages().get(i);
-			OperatiiDocumente.insertWatermark(page,  "Arabesque " + myDateObj.format(myFormatObj));
-			
-		}
-		
-		
-		
-		 pdf.saveToFile("d:/temp/textWaterMark.pdf");
-		
-		
-		ByteArrayOutputStream byteOutStream = new ByteArrayOutputStream();
+		//testSintetice();
 		 
 
+		//testDocSintetice();
+		
+		//testGetDocSintetice();
 		
 		
-		pdf.saveToStream(byteOutStream);
+				
+		//System.out.println(isSinteticSarja());
 		
-		System.out.println(byteOutStream.toByteArray());
+		//System.out.println(setSinteticSarja());
 		
+		//System.out.println(getFurnizori());
 		
+		//System.out.println(getSinteticArticol());
 		
-		
+		testDocumenteTip();
 		
 
 	}
@@ -281,26 +265,24 @@ public class DocTest {
 		
 		Login login = new Login("androsd", "112");
 		User user = new UserDAO().validateUser(login);
-		
 		System.out.println("user: " + user);
-		
 		
 	}
 	
 	
 	private static void testArticole(){
 		
-		System.out.println(new OperatiiArticole().getListArticole("articol", "nume", "cui"));
+		System.out.println(new OperatiiArticole().getListArticole("sintetic", "cod", "100"));
 		
 	}
 	
 	private static void testDocumente(){
-		System.out.println(new OperatiiDocumente().getDocumenteArticol("10900020"));
+		System.out.println(new OperatiiDocumente().getDocumenteArticol("10400015", "articol"));
 	}
 	
 	
 	private static void testDocumenteTip(){
-		System.out.println(new OperatiiDocumente().getDocumenteArticolTip("10900020", "1"));
+		System.out.println(new OperatiiDocumente().getDocumenteArticolTip("10400010", "1"));
 	}
 
 	
@@ -310,12 +292,48 @@ public class DocTest {
 	
 	
 	private static void testArticoleDocument(){
-		System.out.println(new OperatiiArticole().getArticoleDocument("169345"));
+		System.out.println(new OperatiiArticole().getArticoleDocument("8608477961"));
 	}
 
 	private static void testFurnizori(){
-		System.out.println(new OperatiiArticole().getFurnizori("123456"));
+		System.out.println(new OperatiiArticole().getFurnizori("123456",""));
 	}	
 	
+	private static void testSintetice(){
+		System.out.println(new OperatiiArticole().getSintetice("900"));
+	}
+	
+	private static void testDocSintetice(){
+		System.out.println(new OperatiiDocumente().adaugaTipDocSintetic("123", "2,3"));
+	}
+	
+	
+	private static void testGetDocSintetice(){
+		System.out.println(new OperatiiDocumente().getTipDocSintetic("900"));
+	}
+	
+	private static boolean isSinteticSarja(){
+		return new OperatiiArticole().isSinteticSarja("100");
+	}
+	
+	private static boolean setSinteticSarja(){
+		return new OperatiiArticole().setSinteticSarja("100","sterge");
+	}
+	
+	private static List<Furnizor> getFurnizori(){
+		return new OperatiiArticole().getFurnizori("100","sintetic");
+	}
+	
+	private static String getSinteticArticol(){
+		return new OperatiiArticole().getSinteticArticol("10900032");
+	}
+	
+	private static Status stergeDocument(){
+		return new OperatiiDocumente().stergeDocument("10400010", "-1", "1", "4011000048","27.09.2021","27.09.2021");
+	}
+	
+	private static String getArticoleSintetic(){
+		return new OperatiiArticole().getArticoleSintetic("413_1").toString();
+	}
 	
 }

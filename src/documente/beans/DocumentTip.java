@@ -6,6 +6,7 @@ public class DocumentTip {
 	private String dataStopVal;
 	private String codFurnizor;
 	private String numeFurnizor;
+	private String nrSarja;
 
 	public String getDataStartVal() {
 		return dataStartVal;
@@ -39,12 +40,18 @@ public class DocumentTip {
 		this.numeFurnizor = numeFurnizor;
 	}
 
+	public String getNrSarja() {
+		return nrSarja;
+	}
+
+	public void setNrSarja(String nrSarja) {
+		this.nrSarja = nrSarja;
+	}
+
 	@Override
 	public String toString() {
 		return "DocumentTip [dataStartVal=" + dataStartVal + ", dataStopVal=" + dataStopVal + ", codFurnizor="
 				+ codFurnizor + ", numeFurnizor=" + numeFurnizor + "]";
 	}
-
-
 
 }

@@ -8,9 +8,6 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -20,7 +17,9 @@ import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Base64;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Properties;
 
@@ -32,10 +31,10 @@ import com.spire.pdf.graphics.PdfFontFamily;
 import com.spire.pdf.graphics.PdfStringFormat;
 import com.spire.pdf.graphics.PdfTextAlignment;
 import com.spire.pdf.graphics.PdfTilingBrush;
-import com.spire.pdf.graphics.PdfWordWrapType;
 
 import documente.beans.Document;
 import documente.beans.DocumentTip;
+import documente.beans.RezultatDocArticol;
 import documente.beans.Status;
 import documente.connection.DBManager;
 
@@ -112,12 +111,12 @@ public class OperatiiDocumente {
 	}
 
 	public Status adaugaDocument(String codArticol, String tipDocument, byte[] document, String dataStart,
-			String dataStop, String furnizor) {
+			String dataStop, String furnizor, String nrSarja, String unitLog) {
 
 		Status status = new Status();
 
 		try (Connection conn = new DBManager().getConnection();
-				PreparedStatement ps = conn.prepareStatement("INSERT INTO documente VALUES (?, ?, ?, ?, ?, ?)")) {
+				PreparedStatement ps = conn.prepareStatement("INSERT INTO documente VALUES (?, ?, ?, ?, ?, ?, ?, ?)")) {
 
 			ps.setString(1, codArticol);
 			ps.setString(2, tipDocument);
@@ -125,8 +124,10 @@ public class OperatiiDocumente {
 			ps.setString(4, dataStart);
 			ps.setString(5, dataStop);
 			ps.setString(6, furnizor);
+			ps.setString(7, nrSarja);
+			ps.setString(8, unitLog);
 
-			stergeDocExistent(conn, codArticol, tipDocument, furnizor);
+			//stergeDocExistent(conn, codArticol, tipDocument, furnizor);
 
 			int rowCount = ps.executeUpdate();
 
@@ -168,15 +169,102 @@ public class OperatiiDocumente {
 		return status;
 
 	}
+	
+	
+	public Status stergeDocument(String codArticol, String codSarja, String tipDocument, String furnizor, String startValid, String stopValid){
+		
+		Status status = new Status();
+		
+		String sqlString = " delete from documente where codarticol = ? and tipdocument = ? and furnizor = ? and startvalid = ? and stopvalid = ? ";
+		
+		if (!codSarja.equals("-1"))
+			sqlString = " delete from documente where codarticol = ? and tipdocument = ? and furnizor = ? and startvalid = ? and stopvalid = ? and nrsarja = ? ";
+		
+		
+		try (Connection conn = new DBManager().getConnection(); PreparedStatement ps = conn
+				.prepareStatement(sqlString)) {
 
-	public List<Document> getDocumenteArticol(String codArticol) {
+			ps.setString(1, codArticol);
+			ps.setString(2, tipDocument);
+			ps.setString(3, furnizor);
+			ps.setString(4, startValid);
+			ps.setString(5, stopValid);
+			
+			if (!codSarja.equals("-1"))
+				ps.setString(6, codSarja);
+			
+
+			int rowCount = ps.executeUpdate();
+
+			if (rowCount > 0)
+				status.setSucces(true);
+
+		} catch (Exception ex) {
+			System.out.println(ex.toString());
+			status.setSucces(false);
+			status.setMsg(ex.toString());
+		}
+		
+		
+		return status;
+	}
+
+	public RezultatDocArticol getDocumenteArticol(String codArticol, String tipArticol) {
+
+		RezultatDocArticol rezultat = new RezultatDocArticol();
+
+		List<Document> listDocumente = new ArrayList<>();
+
+		if (tipArticol.equalsIgnoreCase("artsint")) {
+			rezultat.setNrSarja(false);
+			rezultat.setListDocumente(listDocumente);
+			return rezultat;
+		}
+		else if (tipArticol.equalsIgnoreCase("sintetic")) {
+			listDocumente = getDocumenteReper(codArticol);
+			rezultat.setNrSarja(false);
+		} else {
+
+			List<Document> listDocumenteSintetic = getDocumenteReper(getSinteticArticol(codArticol));
+			List<Document> listDocumenteArticol = getDocumenteReper(codArticol);
+
+			Iterator<Document> listIterator = listDocumenteSintetic.listIterator();
+
+			for (Document docArt : listDocumenteArticol) {
+
+				while (listIterator.hasNext()) {
+					if (docArt.getTip().equals(listIterator.next().getTip())) {
+						listIterator.remove();
+					}
+				}
+
+			}
+
+			for (Document docSint : listDocumenteSintetic) {
+				listDocumenteArticol.add(docSint);
+			}
+
+			listDocumente = listDocumenteArticol;
+
+			OperatiiArticole opArticole = new OperatiiArticole();
+			rezultat.setNrSarja(opArticole.isSinteticSarja(opArticole.getSinteticArticol(codArticol)));
+
+		}
+
+		rezultat.setListDocumente(listDocumente);
+
+		return rezultat;
+
+	}
+
+	public List<Document> getDocumenteReper(String codArticol) {
 
 		List<Document> listDocumente = new ArrayList<>();
 		List<DocumentTip> listTipDoc = new ArrayList<>();
 
 		try (Connection conn = new DBManager().getConnection();
 				PreparedStatement ps = conn.prepareStatement(
-						"select tipdocument, startvalid, stopvalid, furnizor from documente where codarticol = ? order by tipdocument ")) {
+						"select tipdocument, startvalid, stopvalid, furnizor, nrSarja from documente where codarticol = ? order by tipdocument ")) {
 
 			ps.setString(1, codArticol);
 
@@ -202,6 +290,7 @@ public class OperatiiDocumente {
 				tipDoc.setDataStopVal(rs.getString(3));
 				tipDoc.setCodFurnizor(rs.getString(4));
 				tipDoc.setNumeFurnizor(getNumeFurnizor(rs.getString(4)));
+				tipDoc.setNrSarja(rs.getString(5));
 				listTipDoc.add(tipDoc);
 
 				tipDocument = rs.getString(1);
@@ -218,6 +307,33 @@ public class OperatiiDocumente {
 		}
 
 		return listDocumente;
+
+	}
+
+	public static String getSinteticArticol(String codArticol) {
+
+		String localCodArt = codArticol;
+		String codSintetic = "";
+
+		if (codArticol.length() == 8)
+			localCodArt = "0000000000" + codArticol;
+
+		try (Connection conn = new DBManager().getProdDataSource().getConnection();
+				PreparedStatement ps = conn.prepareStatement("select sintetic from articole where cod  = ? ")) {
+
+			ps.setString(1, localCodArt);
+
+			ResultSet rs = ps.executeQuery();
+
+			while (rs.next()) {
+				codSintetic = rs.getString(1);
+			}
+
+		} catch (Exception ex) {
+			System.out.println(ex.toString());
+		}
+
+		return codSintetic;
 
 	}
 
@@ -342,11 +458,12 @@ public class OperatiiDocumente {
 	}
 
 	public List<DocumentTip> getDocumenteArticolTip(String codArticol, String tipDocument) {
+
 		List<DocumentTip> listDocumente = new ArrayList<>();
 
 		try (Connection conn = new DBManager().getConnection();
 				PreparedStatement ps = conn.prepareStatement(
-						"select startvalid, stopvalid, furnizor from documente where codarticol = ? and tipdocument = ?  ")) {
+						"select startvalid, stopvalid, furnizor, nrsarja from documente where codarticol = ? and tipdocument = ?  ")) {
 
 			ps.setString(1, codArticol);
 			ps.setString(2, tipDocument);
@@ -361,15 +478,142 @@ public class OperatiiDocumente {
 				tipDoc.setDataStopVal(rs.getString(2));
 				tipDoc.setCodFurnizor(rs.getString(3));
 				tipDoc.setNumeFurnizor(getNumeFurnizor(rs.getString(3)));
+				tipDoc.setNrSarja(rs.getString(4));
 				listDocumente.add(tipDoc);
 
 			}
+
+			if (listDocumente.isEmpty() && codArticol.length() >= 8)
+				listDocumente = getDocumenteSinteticTip(codArticol, tipDocument);
 
 		} catch (Exception ex) {
 			System.out.println(ex.toString());
 		}
 
 		return listDocumente;
+	}
+
+	public List<DocumentTip> getDocumenteSinteticTip(String codArticol, String tipDocument) {
+
+		List<DocumentTip> listDocumente = new ArrayList<>();
+
+		String localCodArt = codArticol;
+		String codSintetic = "";
+
+		if (codArticol.length() == 8)
+			localCodArt = "0000000000" + codArticol;
+
+		try (Connection conn = new DBManager().getProdDataSource().getConnection();
+				PreparedStatement ps = conn.prepareStatement("select sintetic from articole where cod  = ? ")) {
+
+			ps.setString(1, localCodArt);
+
+			ResultSet rs = ps.executeQuery();
+
+			while (rs.next()) {
+				codSintetic = rs.getString(1);
+			}
+
+		} catch (Exception ex) {
+			System.out.println(ex.toString());
+		}
+
+		listDocumente = getDocumenteArticolTip(codSintetic, tipDocument);
+
+		return listDocumente;
+
+	}
+
+	public Status adaugaTipDocSintetic(String codSintetic, String tipDocument) {
+
+		Status status = new Status();
+		status.setSucces(true);
+
+		List<String> listTipDoc = new ArrayList<>();
+
+		if (!tipDocument.trim().isEmpty())
+			listTipDoc = Arrays.asList(tipDocument.split(","));
+
+		try (Connection conn = new DBManager().getConnection()) {
+
+			stergeTipDocSintetic(conn, codSintetic);
+
+			PreparedStatement ps = null;
+
+			for (String tipDoc : listTipDoc) {
+
+				ps = conn.prepareStatement("INSERT INTO docsintetice VALUES (?, ?)");
+
+				ps.setString(1, codSintetic);
+				ps.setString(2, tipDoc);
+
+				int rowCount = ps.executeUpdate();
+
+				if (rowCount > 0)
+					status.setSucces(true);
+
+			}
+
+			if (ps != null)
+				ps.close();
+
+		} catch (Exception ex) {
+			status.setSucces(false);
+			status.setMsg(ex.toString());
+			System.out.println(ex.toString());
+		}
+
+		return status;
+	}
+
+	private Status stergeTipDocSintetic(Connection conn, String codSintetic) {
+
+		Status status = new Status();
+
+		try (PreparedStatement ps = conn.prepareStatement("delete from docsintetice where codsintetic = ?  ")) {
+
+			ps.setString(1, codSintetic);
+
+			int rowCount = ps.executeUpdate();
+
+			if (rowCount > 0)
+				status.setSucces(true);
+
+		} catch (Exception ex) {
+			System.out.println(ex.toString());
+			status.setSucces(false);
+			status.setMsg(ex.toString());
+		}
+
+		return status;
+
+	}
+
+	public String getTipDocSintetic(String codSintetic) {
+		String tipDocs = "";
+
+		try (Connection conn = new DBManager().getConnection();
+				PreparedStatement ps = conn
+						.prepareStatement("select tipdocument from docsintetice where codsintetic = ? ")) {
+
+			ps.setString(1, codSintetic);
+
+			ResultSet rs = ps.executeQuery();
+
+			while (rs.next()) {
+
+				if (tipDocs.isEmpty())
+					tipDocs = rs.getString(1);
+				else
+					tipDocs += "," + rs.getString(1);
+			}
+		}
+
+		catch (Exception ex) {
+			System.out.println(ex.toString());
+		}
+
+		return tipDocs;
 	}
 
 }

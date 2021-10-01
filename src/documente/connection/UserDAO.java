@@ -2,6 +2,8 @@ package documente.connection;
 
 import java.sql.CallableStatement;
 import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 
 import documente.beans.Login;
@@ -46,15 +48,17 @@ public class UserDAO {
 				}
 
 				user.setCodPers(codAgent);
-				user.setNume("Nume angajat");
+				user.setNume(callableStatement.getString(9));
 				user.setTipAcces(callableStatement.getString(6));
 				user.setUnitLog("BU90");
 				user.setTipAngajat("Asistent DV");
+				
 
 				String numeDepart = callableStatement.getString(4);
 				String codDepart = Utils.getDepart(numeDepart);
 
 				user.setCodDepart(codDepart);
+				user.setUnitLog(getUnitLogAngajat(conn, codAgent));
 
 				user.setSuccessLogon(true);
 
@@ -75,6 +79,31 @@ public class UserDAO {
 		}
 
 		return user;
+	}
+	
+	
+	private static String getUnitLogAngajat(Connection conn, String angajatId) {
+
+		String unitLog = null;
+
+		try (PreparedStatement stmt = conn.prepareStatement("select filiala from personal  where cod=?")) {
+
+			stmt.setString(1, angajatId);
+
+			stmt.executeQuery();
+
+			ResultSet rs = stmt.getResultSet();
+
+			while (rs.next()) {
+
+				unitLog = rs.getString("filiala");
+			}
+
+		} catch (Exception ex) {
+			System.out.println(Utils.getStackTrace(ex));
+		}
+
+		return unitLog;
 	}
 
 }

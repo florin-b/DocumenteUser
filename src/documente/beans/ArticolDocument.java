@@ -6,6 +6,8 @@ public class ArticolDocument {
 
 	private String codArticol;
 	private String numeArticol;
+	private String codFurnizor;
+	private String dataEmitere;
 	private List<String> tipDocumente;
 
 	public String getCodArticol() {
@@ -23,7 +25,7 @@ public class ArticolDocument {
 	public void setNumeArticol(String numeArticol) {
 		this.numeArticol = numeArticol;
 	}
-	
+
 	public List<String> getTipDocumente() {
 		return tipDocumente;
 	}
@@ -32,14 +34,26 @@ public class ArticolDocument {
 		this.tipDocumente = tipDocumente;
 	}
 
+	public String getCodFurnizor() {
+		return codFurnizor;
+	}
+
+	public void setCodFurnizor(String codFurnizor) {
+		this.codFurnizor = codFurnizor;
+	}
+
+	public String getDataEmitere() {
+		return dataEmitere;
+	}
+
+	public void setDataEmitere(String dataEmitere) {
+		this.dataEmitere = dataEmitere;
+	}
+
 	@Override
 	public String toString() {
 		return "ArticolDocument [codArticol=" + codArticol + ", numeArticol=" + numeArticol + ", tipDocumente="
 				+ tipDocumente + "]";
 	}
-
-	
-	
-	
 
 }

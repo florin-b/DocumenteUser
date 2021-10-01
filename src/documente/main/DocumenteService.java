@@ -3,6 +3,8 @@ package documente.main;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import javax.ws.rs.Consumes;
@@ -25,10 +27,10 @@ import org.json.simple.parser.ParseException;
 
 import documente.beans.Articol;
 import documente.beans.ArticolDocument;
-import documente.beans.Document;
 import documente.beans.DocumentTip;
 import documente.beans.Furnizor;
 import documente.beans.Login;
+import documente.beans.RezultatDocArticol;
 import documente.beans.Status;
 import documente.beans.User;
 import documente.connection.UserDAO;
@@ -128,7 +130,8 @@ public class DocumenteService {
 	public Response testLoad(@FormDataParam("file") InputStream fis,
 			@FormDataParam("file") FormDataContentDisposition fdcd, @FormDataParam("articol") String articol,
 			@FormDataParam("tipDocument") String tipDocument, @FormDataParam("dataStart") String dataStart,
-			@FormDataParam("dataStop") String dataStop, @FormDataParam("furnizor") String furnizor) {
+			@FormDataParam("dataStop") String dataStop, @FormDataParam("furnizor") String furnizor,
+			@FormDataParam("nrSarja") String nrSarja, @FormDataParam("unitLog") String unitLog) {
 
 		Status status = null;
 		ByteArrayOutputStream buffer = new ByteArrayOutputStream();
@@ -144,7 +147,33 @@ public class DocumenteService {
 			buffer.flush();
 			byte[] byteArray = buffer.toByteArray();
 
-			status = new OperatiiDocumente().adaugaDocument(articol, tipDocument, byteArray, dataStart, dataStop, furnizor);
+			if (!nrSarja.trim().isEmpty()) {
+				if (!nrSarja.contains(","))
+					status = new OperatiiDocumente().adaugaDocument(articol, tipDocument, byteArray, dataStart,
+							dataStop, furnizor, nrSarja, unitLog);
+				else {
+					List<String> localListSarje = new ArrayList<>(Arrays.asList(nrSarja.split(",")));
+
+					for (String localNrSarja : localListSarje)
+						if (!localNrSarja.trim().isEmpty())
+							status = new OperatiiDocumente().adaugaDocument(articol, tipDocument, byteArray, dataStart,
+									dataStop, furnizor, localNrSarja, unitLog);
+				}
+				
+
+			} else {
+				if (!articol.contains(","))
+					status = new OperatiiDocumente().adaugaDocument(articol, tipDocument, byteArray, dataStart,
+							dataStop, furnizor, nrSarja, unitLog);
+				else {
+					List<String> localListArt = new ArrayList<>(Arrays.asList(articol.split(",")));
+
+					for (String codArt : localListArt)
+						if (!codArt.trim().isEmpty())
+							status = new OperatiiDocumente().adaugaDocument(codArt, tipDocument, byteArray, dataStart,
+									dataStop, furnizor, nrSarja, unitLog);
+				}
+			}
 
 		} catch (Exception iox) {
 			iox.printStackTrace();
@@ -160,15 +189,16 @@ public class DocumenteService {
 	@Path("getDocumente")
 	@GET
 	@Produces(MediaType.APPLICATION_JSON)
-	public Response getDocumente(@QueryParam("codArticol") String codArticol) {
+	public Response getDocumente(@QueryParam("codArticol") String codArticol,
+			@QueryParam("tipArticol") String tipArticol) {
 
-		List<Document> listDocumente = new OperatiiDocumente().getDocumenteArticol(codArticol);
+		RezultatDocArticol rezultat = new OperatiiDocumente().getDocumenteArticol(codArticol, tipArticol);
 
 		return Response.status(200).header("Access-Control-Allow-Origin", "*")
 				.header("Access-Control-Allow-Headers", "origin, content-type, accept, authorization")
 				.header("Access-Control-Allow-Credentials", "true")
 				.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS, HEAD")
-				.header("Access-Control-Max-Age", "1209600").entity(listDocumente).build();
+				.header("Access-Control-Max-Age", "1209600").entity(rezultat).build();
 
 	}
 
@@ -178,73 +208,82 @@ public class DocumenteService {
 	public Response getDocumentByte(@QueryParam("codArticol") String codArticol,
 			@QueryParam("tipDocument") String tipDocument, @QueryParam("codFurnizor") String codFurnizor) {
 
-		
-		StreamingOutput fileStream =  new StreamingOutput() 
-        {
-            @Override
-            public void write(java.io.OutputStream output) throws IOException
-            {
-                try
-                {
-                    byte[] data = new OperatiiDocumente().getDocumentByte(codArticol, tipDocument, codFurnizor);
-                    output.write(data);
-                    output.flush();
-                } 
-                catch (Exception e) 
-                {
-                    throw new WebApplicationException("File Not Found !!");
-                }
-            }
-        };
-		
-		
-        return Response.status(200).header("Access-Control-Allow-Origin", "*")
+		StreamingOutput fileStream = new StreamingOutput() {
+			@Override
+			public void write(java.io.OutputStream output) throws IOException {
+				try {
+					byte[] data = new OperatiiDocumente().getDocumentByte(codArticol, tipDocument, codFurnizor);
+					output.write(data);
+					output.flush();
+				} catch (Exception e) {
+					throw new WebApplicationException("File Not Found !!");
+				}
+			}
+		};
+
+		return Response.status(200).header("Access-Control-Allow-Origin", "*")
 				.header("Access-Control-Allow-Headers", "origin, content-type, accept, authorization")
 				.header("Access-Control-Allow-Credentials", "true")
 				.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS, HEAD")
 				.header("Access-Control-Max-Age", "1209600").entity(fileStream).build();
-        
-		
+
 	}
-	
-	
+
+	@Path("stergeDocument")
+	@POST
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response stergeDocument(@FormDataParam("codArticol") String codArticol,
+			@FormDataParam("codSarja") String codSarja, @FormDataParam("tipDocument") String tipDocument,
+			@FormDataParam("codFurnizor") String codFurnizor, @FormDataParam("startValid") String startValid,
+			@FormDataParam("stopValid") String stopValid) {
+
+		Status status = new OperatiiDocumente().stergeDocument(codArticol, codSarja, tipDocument, codFurnizor,
+				startValid, stopValid);
+
+		return Response.status(200).header("Access-Control-Allow-Origin", "*")
+				.header("Access-Control-Allow-Headers", "origin, content-type, accept, authorization")
+				.header("Access-Control-Allow-Credentials", "true")
+				.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS, HEAD")
+				.header("Access-Control-Max-Age", "1209600").entity(status).build();
+
+	}
+
 	@Path("getArticoleDocument")
 	@GET
 	@Produces(MediaType.APPLICATION_JSON)
-	public Response getArticoleDocument(@QueryParam("nrDocument") String nrDocument){
-		
+	public Response getArticoleDocument(@QueryParam("nrDocument") String nrDocument) {
+
 		List<ArticolDocument> listArticole = new OperatiiArticole().getArticoleDocument(nrDocument);
-		
+
 		return Response.status(200).header("Access-Control-Allow-Origin", "*")
 				.header("Access-Control-Allow-Headers", "origin, content-type, accept, authorization")
 				.header("Access-Control-Allow-Credentials", "true")
 				.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS, HEAD")
 				.header("Access-Control-Max-Age", "1209600").entity(listArticole).build();
-		
-		
+
 	}
-	
-	
+
 	@Path("getFurnizoriArticol")
 	@GET
 	@Produces(MediaType.APPLICATION_JSON)
-	public Response getFurnizoriArticol(@QueryParam("codArticol") String codArticol){
-		
-		List<Furnizor> listFurnizori = new OperatiiArticole().getFurnizori(codArticol);
-		
+	public Response getFurnizoriArticol(@QueryParam("codArticol") String codArticol,
+			@QueryParam("tipArticol") String tipArticol) {
+
+		List<Furnizor> listFurnizori = new OperatiiArticole().getFurnizori(codArticol, tipArticol);
+
 		return Response.status(200).header("Access-Control-Allow-Origin", "*")
 				.header("Access-Control-Allow-Headers", "origin, content-type, accept, authorization")
 				.header("Access-Control-Allow-Credentials", "true")
 				.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS, HEAD")
 				.header("Access-Control-Max-Age", "1209600").entity(listFurnizori).build();
-		
-		
+
 	}
-	
+
 	@Path("getDocumenteTip")
 	@GET
 	@Produces(MediaType.APPLICATION_JSON)
-	public Response getDocumenteTip(@QueryParam("codArticol") String codArticol, @QueryParam("tipDocument") String tipDocument) {
+	public Response getDocumenteTip(@QueryParam("codArticol") String codArticol,
+			@QueryParam("tipDocument") String tipDocument) {
 
 		List<DocumentTip> listDocumente = new OperatiiDocumente().getDocumenteArticolTip(codArticol, tipDocument);
 
@@ -253,6 +292,98 @@ public class DocumenteService {
 				.header("Access-Control-Allow-Credentials", "true")
 				.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS, HEAD")
 				.header("Access-Control-Max-Age", "1209600").entity(listDocumente).build();
+
+	}
+
+	@Path("getSintetice")
+	@GET
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response getSintetice(@QueryParam("codSintetic") String codSintetic) {
+
+		List<Articol> listSintetice = new OperatiiArticole().getSintetice(codSintetic);
+
+		return Response.status(200).header("Access-Control-Allow-Origin", "*")
+				.header("Access-Control-Allow-Headers", "origin, content-type, accept, authorization")
+				.header("Access-Control-Allow-Credentials", "true")
+				.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS, HEAD")
+				.header("Access-Control-Max-Age", "1209600").entity(listSintetice).build();
+
+	}
+
+	@Path("adaugaTipDocSint")
+	@POST
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response adaugaTipDocSintetic(@FormDataParam("codSintetic") String codSintetic,
+			@FormDataParam("tipDoc") String tipDoc) {
+
+		Status status = new OperatiiDocumente().adaugaTipDocSintetic(codSintetic, tipDoc);
+
+		return Response.status(200).header("Access-Control-Allow-Origin", "*")
+				.header("Access-Control-Allow-Headers", "origin, content-type, accept, authorization")
+				.header("Access-Control-Allow-Credentials", "true")
+				.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS, HEAD")
+				.header("Access-Control-Max-Age", "1209600").entity(status).build();
+
+	}
+
+	@Path("getTipDocSint")
+	@GET
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response getTipDocSint(@QueryParam("codSintetic") String codSintetic) {
+
+		String tipDocs = new OperatiiDocumente().getTipDocSintetic(codSintetic);
+
+		return Response.status(200).header("Access-Control-Allow-Origin", "*")
+				.header("Access-Control-Allow-Headers", "origin, content-type, accept, authorization")
+				.header("Access-Control-Allow-Credentials", "true")
+				.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS, HEAD")
+				.header("Access-Control-Max-Age", "1209600").entity(tipDocs).build();
+
+	}
+
+	@Path("getSinteticSarja")
+	@GET
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response getSinteticSarja(@QueryParam("codSintetic") String codSintetic) {
+
+		String isSinteticSarja = String.valueOf(new OperatiiArticole().isSinteticSarja(codSintetic));
+
+		return Response.status(200).header("Access-Control-Allow-Origin", "*")
+				.header("Access-Control-Allow-Headers", "origin, content-type, accept, authorization")
+				.header("Access-Control-Allow-Credentials", "true")
+				.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS, HEAD")
+				.header("Access-Control-Max-Age", "1209600").entity(isSinteticSarja).build();
+
+	}
+
+	@Path("setSinteticSarja")
+	@POST
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response setSinteticSarja(@FormDataParam("codSintetic") String codSintetic,
+			@FormDataParam("tipOp") String tipOp) {
+
+		String setSinteticSarja = String.valueOf(new OperatiiArticole().setSinteticSarja(codSintetic, tipOp));
+
+		return Response.status(200).header("Access-Control-Allow-Origin", "*")
+				.header("Access-Control-Allow-Headers", "origin, content-type, accept, authorization")
+				.header("Access-Control-Allow-Credentials", "true")
+				.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS, HEAD")
+				.header("Access-Control-Max-Age", "1209600").entity(setSinteticSarja).build();
+
+	}
+
+	@Path("getArticoleSintetic")
+	@GET
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response getArticoleSintetic(@QueryParam("codSintetic") String codSintetic) {
+
+		List<Articol> listArticole = new OperatiiArticole().getArticoleSintetic(codSintetic);
+
+		return Response.status(200).header("Access-Control-Allow-Origin", "*")
+				.header("Access-Control-Allow-Headers", "origin, content-type, accept, authorization")
+				.header("Access-Control-Allow-Credentials", "true")
+				.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS, HEAD")
+				.header("Access-Control-Max-Age", "1209600").entity(listArticole).build();
 
 	}
 
