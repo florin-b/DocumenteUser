@@ -158,10 +158,13 @@ public class OperatiiArticole {
 
 		if (tipArticol.equals("articol")) {
 			sqlQuery = " select distinct a.lifnr, l.name1 from sapprd.eina a, sapprd.lfa1 l where a.mandt = '900' and a.matnr = ? "
-					+ " and a.mandt = l.mandt and a.lifnr = l.lifnr and lower(l.name1) not like '%anulat%' order by l.name1 ";
+					+ " and a.mandt = l.mandt and a.lifnr = l.lifnr and lower(l.name1) not like '%anulat%' " 
+					+ " and  a.loekz <> 'X' and l.SPERR <> 'X' and l.SPERM <> 'X' and l.SPERQ <> '01'" 
+					+ " order by l.name1 ";
 		} else if (tipArticol.equals("sintetic") || tipArticol.equals("artsint")) {
 			sqlQuery = " select distinct a.lifnr, l.name1 from sapprd.eina a, sapprd.lfa1 l where a.mandt = '900' and a.matnr in "
 					+ " ( select cod from articole where sintetic = ? ) "
+					+ " and  a.loekz <> 'X' and l.SPERR <> 'X' and l.SPERM <> 'X' and l.SPERQ <> '01'"
 					+ " and a.mandt = l.mandt and a.lifnr = l.lifnr and lower(l.name1) not like '%anulat%' order by l.name1 ";
 		}
 

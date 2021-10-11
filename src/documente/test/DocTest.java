@@ -22,6 +22,7 @@ import documente.beans.Status;
 import documente.beans.User;
 import documente.connection.DBManager;
 import documente.connection.UserDAO;
+import documente.impdocs.ImportDocs;
 import documente.model.OperatiiArticole;
 import documente.model.OperatiiDocumente;
 
@@ -70,11 +71,13 @@ public class DocTest {
 		
 		//System.out.println(setSinteticSarja());
 		
-		//System.out.println(getFurnizori());
+		System.out.println(getFurnizori());
 		
 		//System.out.println(getSinteticArticol());
 		
-		testDocumenteTip();
+		//testDocumenteTip();
+		
+		//testImport();
 		
 
 	}
@@ -321,7 +324,7 @@ public class DocTest {
 	}
 	
 	private static List<Furnizor> getFurnizori(){
-		return new OperatiiArticole().getFurnizori("100","sintetic");
+		return new OperatiiArticole().getFurnizori("763","sintetic");
 	}
 	
 	private static String getSinteticArticol(){
@@ -334,6 +337,15 @@ public class DocTest {
 	
 	private static String getArticoleSintetic(){
 		return new OperatiiArticole().getArticoleSintetic("413_1").toString();
+	}
+	
+	private static void testImport(){
+		try{
+		new ImportDocs().importFromExcel();
+		}
+		catch(Exception ex){
+			System.out.println(ex.toString());
+		}
 	}
 	
 }
