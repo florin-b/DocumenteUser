@@ -25,6 +25,7 @@ import documente.connection.UserDAO;
 import documente.impdocs.ImportDocs;
 import documente.model.OperatiiArticole;
 import documente.model.OperatiiDocumente;
+import documente.model.OperatiiFurnizori;
 
 
 public class DocTest {
@@ -55,7 +56,7 @@ public class DocTest {
 
 		//testArticoleDocument();
 		
-		//testFurnizori();
+		testFurnizori();
 		
 		
 		//testSintetice();
@@ -71,13 +72,21 @@ public class DocTest {
 		
 		//System.out.println(setSinteticSarja());
 		
-		System.out.println(getFurnizori());
+		//System.out.println(getFurnizori());
 		
 		//System.out.println(getSinteticArticol());
 		
 		//testDocumenteTip();
 		
 		//testImport();
+		
+		//testFurnizor();
+		
+		//testSintFurnizor();
+		
+		//testArtFurnizor();
+		
+		//testRaportDocumente();
 		
 
 	}
@@ -299,7 +308,7 @@ public class DocTest {
 	}
 
 	private static void testFurnizori(){
-		System.out.println(new OperatiiArticole().getFurnizori("123456",""));
+		System.out.println(new OperatiiArticole().getFurnizori("10400010","articol"));
 	}	
 	
 	private static void testSintetice(){
@@ -337,6 +346,23 @@ public class DocTest {
 	
 	private static String getArticoleSintetic(){
 		return new OperatiiArticole().getArticoleSintetic("413_1").toString();
+	}
+	
+	private static void testFurnizor(){
+		new OperatiiFurnizori().cautaFurnizor("FAB");
+	}
+	
+	private static void testSintFurnizor(){
+		System.out.println(new OperatiiFurnizori().getSinteticeFurnizor("4011001237", "09"));
+	}
+	
+	private static void testArtFurnizor(){
+		System.out.println(new OperatiiFurnizori().getArticoleFurnizor("4012000155", "910_1,910_2"));
+	}
+	
+	
+	private static void testRaportDocumente(){
+		System.out.println(new OperatiiDocumente().getDocumenteFurnizor("4011000006", "910_1,910_2","10400483,10400484,10400485"));
 	}
 	
 	private static void testImport(){

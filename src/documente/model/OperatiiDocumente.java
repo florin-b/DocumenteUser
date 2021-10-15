@@ -32,7 +32,9 @@ import com.spire.pdf.graphics.PdfStringFormat;
 import com.spire.pdf.graphics.PdfTextAlignment;
 import com.spire.pdf.graphics.PdfTilingBrush;
 
+import documente.beans.Articol;
 import documente.beans.Document;
+import documente.beans.DocumentRaport;
 import documente.beans.DocumentTip;
 import documente.beans.RezultatDocArticol;
 import documente.beans.Status;
@@ -127,7 +129,7 @@ public class OperatiiDocumente {
 			ps.setString(7, nrSarja);
 			ps.setString(8, unitLog);
 
-			//stergeDocExistent(conn, codArticol, tipDocument, furnizor);
+			// stergeDocExistent(conn, codArticol, tipDocument, furnizor);
 
 			int rowCount = ps.executeUpdate();
 
@@ -169,30 +171,28 @@ public class OperatiiDocumente {
 		return status;
 
 	}
-	
-	
-	public Status stergeDocument(String codArticol, String codSarja, String tipDocument, String furnizor, String startValid, String stopValid){
-		
+
+	public Status stergeDocument(String codArticol, String codSarja, String tipDocument, String furnizor,
+			String startValid, String stopValid) {
+
 		Status status = new Status();
-		
+
 		String sqlString = " delete from documente where codarticol = ? and tipdocument = ? and furnizor = ? and startvalid = ? and stopvalid = ? ";
-		
+
 		if (!codSarja.equals("-1"))
 			sqlString = " delete from documente where codarticol = ? and tipdocument = ? and furnizor = ? and startvalid = ? and stopvalid = ? and nrsarja = ? ";
-		
-		
-		try (Connection conn = new DBManager().getConnection(); PreparedStatement ps = conn
-				.prepareStatement(sqlString)) {
+
+		try (Connection conn = new DBManager().getConnection();
+				PreparedStatement ps = conn.prepareStatement(sqlString)) {
 
 			ps.setString(1, codArticol);
 			ps.setString(2, tipDocument);
 			ps.setString(3, furnizor);
 			ps.setString(4, startValid);
 			ps.setString(5, stopValid);
-			
+
 			if (!codSarja.equals("-1"))
 				ps.setString(6, codSarja);
-			
 
 			int rowCount = ps.executeUpdate();
 
@@ -204,8 +204,7 @@ public class OperatiiDocumente {
 			status.setSucces(false);
 			status.setMsg(ex.toString());
 		}
-		
-		
+
 		return status;
 	}
 
@@ -216,11 +215,10 @@ public class OperatiiDocumente {
 		List<Document> listDocumente = new ArrayList<>();
 
 		if (tipArticol.equalsIgnoreCase("artsint")) {
-			rezultat.setNrSarja(false);
+			rezultat.setNrSarja(true);
 			rezultat.setListDocumente(listDocumente);
 			return rezultat;
-		}
-		else if (tipArticol.equalsIgnoreCase("sintetic")) {
+		} else if (tipArticol.equalsIgnoreCase("sintetic")) {
 			listDocumente = getDocumenteReper(codArticol);
 			rezultat.setNrSarja(false);
 		} else {
@@ -614,6 +612,94 @@ public class OperatiiDocumente {
 		}
 
 		return tipDocs;
+	}
+
+	public List<DocumentRaport> getDocumenteFurnizor(String codFurnizor, String sintetice, String articole) {
+
+		List<DocumentRaport> listDocumente = new ArrayList<>();
+
+		String listRepere = "";
+
+		if (!sintetice.contains(","))
+			listRepere = "'" + sintetice + "'";
+		else {
+			for (String strSnt : sintetice.split(",")) {
+				if (listRepere.isEmpty())
+					listRepere = "'" + strSnt + "'";
+				else
+					listRepere += "," + "'" + strSnt + "'";
+
+			}
+		}
+
+		if (!articole.contains(","))
+			listRepere += "," + "'" + articole + "'";
+		else {
+			for (String strSnt : articole.split(",")) {
+				if (listRepere.isEmpty())
+					listRepere = "'" + strSnt + "'";
+				else
+					listRepere += "," + "'" + strSnt + "'";
+
+			}
+		}
+
+	
+
+		StringBuilder sqlString = new StringBuilder();
+		sqlString.append(" select codarticol, tipdocument, startvalid, stopvalid, nrSarja, ");
+		sqlString.append(" unitlog from documente ");
+		sqlString.append(" where furnizor = ? and codarticol in (");
+		sqlString.append(listRepere);
+		sqlString.append(") order by tipdocument ");
+		
+		
+
+		try (Connection conn = new DBManager().getConnection();
+				PreparedStatement ps = conn.prepareStatement(sqlString.toString())) {
+
+			ps.setString(1, codFurnizor);
+
+			ResultSet rs = ps.executeQuery();
+
+
+			while (rs.next()) {
+
+				DocumentRaport docRaport = new DocumentRaport();
+
+				docRaport.setCodReper(rs.getString(1));
+				docRaport.setTipDocument(rs.getString(2));
+				docRaport.setDataStartValid(rs.getString(3));
+				docRaport.setDataStopValid(rs.getString(4));
+				docRaport.setNrSarja(rs.getString(5));
+				docRaport.setFiliala(rs.getString(6));
+
+				listDocumente.add(docRaport);
+
+			}
+
+		} catch (Exception ex) {
+			System.out.println(ex.toString());
+		}
+		
+		
+		List<Articol> numeRepere = new OperatiiArticole().getNumeRepere(sintetice, articole);
+		
+		
+		for (Articol reper : numeRepere){
+			for (DocumentRaport doc : listDocumente){
+				if (reper.getCod().equals(doc.getCodReper())){
+					doc.setNumeReper(reper.getNume());
+					break;
+				}
+			}
+			
+		}
+		
+		
+
+		return listDocumente;
+
 	}
 
 }

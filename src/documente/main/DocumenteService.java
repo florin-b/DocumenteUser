@@ -27,15 +27,18 @@ import org.json.simple.parser.ParseException;
 
 import documente.beans.Articol;
 import documente.beans.ArticolDocument;
+import documente.beans.DocumentRaport;
 import documente.beans.DocumentTip;
 import documente.beans.Furnizor;
 import documente.beans.Login;
+import documente.beans.Reper;
 import documente.beans.RezultatDocArticol;
 import documente.beans.Status;
 import documente.beans.User;
 import documente.connection.UserDAO;
 import documente.model.OperatiiArticole;
 import documente.model.OperatiiDocumente;
+import documente.model.OperatiiFurnizori;
 
 @Path("documente")
 public class DocumenteService {
@@ -159,7 +162,6 @@ public class DocumenteService {
 							status = new OperatiiDocumente().adaugaDocument(articol, tipDocument, byteArray, dataStart,
 									dataStop, furnizor, localNrSarja, unitLog);
 				}
-				
 
 			} else {
 				if (!articol.contains(","))
@@ -384,6 +386,66 @@ public class DocumenteService {
 				.header("Access-Control-Allow-Credentials", "true")
 				.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS, HEAD")
 				.header("Access-Control-Max-Age", "1209600").entity(listArticole).build();
+
+	}
+
+	@Path("cautaFurnizor")
+	@GET
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response cautaFurnizor(@QueryParam("numeFurnizor") String numeFurnizor) {
+
+		List<Furnizor> listFurnizori = new OperatiiFurnizori().cautaFurnizor(numeFurnizor);
+
+		return Response.status(200).header("Access-Control-Allow-Origin", "*")
+				.header("Access-Control-Allow-Headers", "origin, content-type, accept, authorization")
+				.header("Access-Control-Allow-Credentials", "true")
+				.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS, HEAD")
+				.header("Access-Control-Max-Age", "1209600").entity(listFurnizori).build();
+
+	}
+	
+	@Path("getSinteticeFurnizor")
+	@GET
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response getSinteticeFurnizor(@QueryParam("codFurnizor") String codFurnizor, @QueryParam("codDepart") String codDepart) {
+
+		List<Reper> listSintetice = new OperatiiFurnizori().getSinteticeFurnizor(codFurnizor, codDepart);
+
+		return Response.status(200).header("Access-Control-Allow-Origin", "*")
+				.header("Access-Control-Allow-Headers", "origin, content-type, accept, authorization")
+				.header("Access-Control-Allow-Credentials", "true")
+				.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS, HEAD")
+				.header("Access-Control-Max-Age", "1209600").entity(listSintetice).build();
+
+	}
+	
+	@Path("getArticoleFurnizor")
+	@GET
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response getArticoleFurnizor(@QueryParam("codFurnizor") String codFurnizor, @QueryParam("sintetice") String sintetice) {
+
+		List<Reper> listSintetice = new OperatiiFurnizori().getArticoleFurnizor(codFurnizor, sintetice);
+
+		return Response.status(200).header("Access-Control-Allow-Origin", "*")
+				.header("Access-Control-Allow-Headers", "origin, content-type, accept, authorization")
+				.header("Access-Control-Allow-Credentials", "true")
+				.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS, HEAD")
+				.header("Access-Control-Max-Age", "1209600").entity(listSintetice).build();
+
+	}
+	
+	@Path("getDocumenteFurnizor")
+	@GET
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response getDocumenteFurnizor(@QueryParam("codFurnizor") String codFurnizor, @QueryParam("sintetice") String sintetice, @QueryParam("articole") String articole) {
+
+		List<DocumentRaport> listDocumente = new OperatiiDocumente().getDocumenteFurnizor(codFurnizor, sintetice, articole);
+
+		return Response.status(200).header("Access-Control-Allow-Origin", "*")
+				.header("Access-Control-Allow-Headers", "origin, content-type, accept, authorization")
+				.header("Access-Control-Allow-Credentials", "true")
+				.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS, HEAD")
+				.header("Access-Control-Max-Age", "1209600").entity(listDocumente).build();
 
 	}
 
