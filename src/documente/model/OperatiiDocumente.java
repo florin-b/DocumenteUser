@@ -644,16 +644,12 @@ public class OperatiiDocumente {
 			}
 		}
 
-	
-
 		StringBuilder sqlString = new StringBuilder();
 		sqlString.append(" select codarticol, tipdocument, startvalid, stopvalid, nrSarja, ");
 		sqlString.append(" unitlog from documente ");
 		sqlString.append(" where furnizor = ? and codarticol in (");
 		sqlString.append(listRepere);
 		sqlString.append(") order by tipdocument ");
-		
-		
 
 		try (Connection conn = new DBManager().getConnection();
 				PreparedStatement ps = conn.prepareStatement(sqlString.toString())) {
@@ -661,7 +657,6 @@ public class OperatiiDocumente {
 			ps.setString(1, codFurnizor);
 
 			ResultSet rs = ps.executeQuery();
-
 
 			while (rs.next()) {
 
@@ -681,25 +676,70 @@ public class OperatiiDocumente {
 		} catch (Exception ex) {
 			System.out.println(ex.toString());
 		}
-		
-		
+
 		List<Articol> numeRepere = new OperatiiArticole().getNumeRepere(sintetice, articole);
-		
-		
-		for (Articol reper : numeRepere){
-			for (DocumentRaport doc : listDocumente){
-				if (reper.getCod().equals(doc.getCodReper())){
+
+		for (Articol reper : numeRepere) {
+			for (DocumentRaport doc : listDocumente) {
+				if (reper.getCod().equals(doc.getCodReper())) {
 					doc.setNumeReper(reper.getNume());
-					break;
 				}
 			}
-			
+
 		}
-		
-		
 
 		return listDocumente;
 
+	}
+
+	public Status uploadFile(String articol, String tipDocument, byte[] byteArray, String dataStart, String dataStop,
+			String furnizor, String nrSarja, String unitLog) {
+		Status status = new Status();
+
+		if (articol.contains(",") && nrSarja.contains(",")) {
+
+			List<String> localListSarje = new ArrayList<>(Arrays.asList(nrSarja.split(",")));
+			List<String> localListArt = new ArrayList<>(Arrays.asList(articol.split(",")));
+
+			for (String codArt : localListArt) {
+				for (String localNrSarja : localListSarje) {
+					if (!codArt.trim().isEmpty() && !localNrSarja.trim().isEmpty()) {
+						status = new OperatiiDocumente().adaugaDocument(codArt, tipDocument, byteArray, dataStart,
+								dataStop, furnizor, localNrSarja, unitLog);
+					}
+
+				}
+
+			}
+
+		} else if (!nrSarja.trim().isEmpty()) {
+			if (!nrSarja.contains(","))
+				status = new OperatiiDocumente().adaugaDocument(articol, tipDocument, byteArray, dataStart, dataStop,
+						furnizor, nrSarja, unitLog);
+			else {
+				List<String> localListSarje = new ArrayList<>(Arrays.asList(nrSarja.split(",")));
+
+				for (String localNrSarja : localListSarje)
+					if (!localNrSarja.trim().isEmpty())
+						status = new OperatiiDocumente().adaugaDocument(articol, tipDocument, byteArray, dataStart,
+								dataStop, furnizor, localNrSarja, unitLog);
+			}
+
+		} else {
+			if (!articol.contains(","))
+				status = new OperatiiDocumente().adaugaDocument(articol, tipDocument, byteArray, dataStart, dataStop,
+						furnizor, nrSarja, unitLog);
+			else {
+				List<String> localListArt = new ArrayList<>(Arrays.asList(articol.split(",")));
+
+				for (String codArt : localListArt)
+					if (!codArt.trim().isEmpty())
+						status = new OperatiiDocumente().adaugaDocument(codArt, tipDocument, byteArray, dataStart,
+								dataStop, furnizor, nrSarja, unitLog);
+			}
+		}
+
+		return status;
 	}
 
 }

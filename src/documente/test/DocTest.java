@@ -56,7 +56,7 @@ public class DocTest {
 
 		//testArticoleDocument();
 		
-		testFurnizori();
+		//testFurnizori();
 		
 		
 		//testSintetice();
@@ -86,7 +86,7 @@ public class DocTest {
 		
 		//testArtFurnizor();
 		
-		//testRaportDocumente();
+		testRaportDocumente();
 		
 
 	}
@@ -362,7 +362,7 @@ public class DocTest {
 	
 	
 	private static void testRaportDocumente(){
-		System.out.println(new OperatiiDocumente().getDocumenteFurnizor("4011000006", "910_1,910_2","10400483,10400484,10400485"));
+		System.out.println(new OperatiiDocumente().getDocumenteFurnizor("4011100016", "403",""));
 	}
 	
 	private static void testImport(){

@@ -130,7 +130,7 @@ public class DocumenteService {
 	@POST
 	@Path("uploadFile")
 	@Consumes(MediaType.MULTIPART_FORM_DATA)
-	public Response testLoad(@FormDataParam("file") InputStream fis,
+	public Response uploadFile(@FormDataParam("file") InputStream fis,
 			@FormDataParam("file") FormDataContentDisposition fdcd, @FormDataParam("articol") String articol,
 			@FormDataParam("tipDocument") String tipDocument, @FormDataParam("dataStart") String dataStart,
 			@FormDataParam("dataStop") String dataStop, @FormDataParam("furnizor") String furnizor,
@@ -149,6 +149,11 @@ public class DocumenteService {
 
 			buffer.flush();
 			byte[] byteArray = buffer.toByteArray();
+
+			status = new OperatiiDocumente().uploadFile(articol, tipDocument, byteArray, dataStart, dataStop, furnizor,
+					nrSarja, unitLog);
+			
+			/*
 
 			if (!nrSarja.trim().isEmpty()) {
 				if (!nrSarja.contains(","))
@@ -176,6 +181,8 @@ public class DocumenteService {
 									dataStop, furnizor, nrSarja, unitLog);
 				}
 			}
+			
+			*/
 
 		} catch (Exception iox) {
 			iox.printStackTrace();
@@ -403,11 +410,12 @@ public class DocumenteService {
 				.header("Access-Control-Max-Age", "1209600").entity(listFurnizori).build();
 
 	}
-	
+
 	@Path("getSinteticeFurnizor")
 	@GET
 	@Produces(MediaType.APPLICATION_JSON)
-	public Response getSinteticeFurnizor(@QueryParam("codFurnizor") String codFurnizor, @QueryParam("codDepart") String codDepart) {
+	public Response getSinteticeFurnizor(@QueryParam("codFurnizor") String codFurnizor,
+			@QueryParam("codDepart") String codDepart) {
 
 		List<Reper> listSintetice = new OperatiiFurnizori().getSinteticeFurnizor(codFurnizor, codDepart);
 
@@ -418,11 +426,12 @@ public class DocumenteService {
 				.header("Access-Control-Max-Age", "1209600").entity(listSintetice).build();
 
 	}
-	
+
 	@Path("getArticoleFurnizor")
 	@GET
 	@Produces(MediaType.APPLICATION_JSON)
-	public Response getArticoleFurnizor(@QueryParam("codFurnizor") String codFurnizor, @QueryParam("sintetice") String sintetice) {
+	public Response getArticoleFurnizor(@QueryParam("codFurnizor") String codFurnizor,
+			@QueryParam("sintetice") String sintetice) {
 
 		List<Reper> listSintetice = new OperatiiFurnizori().getArticoleFurnizor(codFurnizor, sintetice);
 
@@ -433,13 +442,15 @@ public class DocumenteService {
 				.header("Access-Control-Max-Age", "1209600").entity(listSintetice).build();
 
 	}
-	
+
 	@Path("getDocumenteFurnizor")
 	@GET
 	@Produces(MediaType.APPLICATION_JSON)
-	public Response getDocumenteFurnizor(@QueryParam("codFurnizor") String codFurnizor, @QueryParam("sintetice") String sintetice, @QueryParam("articole") String articole) {
+	public Response getDocumenteFurnizor(@QueryParam("codFurnizor") String codFurnizor,
+			@QueryParam("sintetice") String sintetice, @QueryParam("articole") String articole) {
 
-		List<DocumentRaport> listDocumente = new OperatiiDocumente().getDocumenteFurnizor(codFurnizor, sintetice, articole);
+		List<DocumentRaport> listDocumente = new OperatiiDocumente().getDocumenteFurnizor(codFurnizor, sintetice,
+				articole);
 
 		return Response.status(200).header("Access-Control-Allow-Origin", "*")
 				.header("Access-Control-Allow-Headers", "origin, content-type, accept, authorization")
